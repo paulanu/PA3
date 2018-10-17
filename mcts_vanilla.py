@@ -24,7 +24,8 @@ def traverse_nodes(node, board, state, identity):
     # also it's unfinished
 
     # while loop exits if a leaf node is found
-    while not node.untried_actions:
+    while not node.untried_actions and node.child_nodes:
+
 
         # this node will be the next node to traverse to
         node_to_traverse = None
@@ -63,8 +64,10 @@ def expand_leaf(node, board, state):
 
     # find all possible actions after that action is made
     # NOTE - board is now changed, bc move was tried and board is a reference
-    state = board.next_state(state, random_action)
-    possible_actions = board.legal_actions(state)
+
+    board.next_state(state, random_action)
+    possible_actions = board.legal_actions(new_state)
+
 
     # make tha fookin' node
     child_node = MCTSNode(node, random_action, possible_actions)
@@ -111,7 +114,6 @@ def backpropagate(node, won):
             node.visits = node.visits + 1
             node = node.parent
 
-
 def think(board, state):
     """ Performs MCTS by sampling games and calling the appropriate functions to construct the game tree.
 
@@ -132,8 +134,29 @@ def think(board, state):
         # Start at root
         node = root_node
 
-        # Do MCTS - This is all you!
+        # Do MCTS lmaoooo
+        child_node = traverse_nodes(node, board, sampled_game, identity_of_bot)
+        expanded_node = expand_leaf(child_node, board, sampled_game)
+        rollout(board, sampled_game)
+
+        # check who won
+        if (board.points_values(sampled_game)[identity_of_bot] is 1) 
+            backpropagate(expanded_node, True)
+        else
+            backpropagate(expanded_node, False)
+
+    # select an action after MCTS has built the tree
+    win_rate = 0
+    action = None
+    for child_node in node.child_nodes
+        child_node_wr = child_node.wins/child_node.visits
+        if child_node_wr > win_rate
+            win_rate = child_node_wr
+            action = child_node
+    return action
+
+
+    #ASK HOW TREE WORKS- ARE ALL THINGS FROM ROOT EXPLORED BEFORE THE REST??????????????
 
     # Return an action, typically the most frequently used action (from the root) or the action with the best
     # estimated win rate.
-    return None
