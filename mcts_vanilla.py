@@ -1,4 +1,4 @@
-
+hddddddddddddddd
 from mcts_node import MCTSNode
 from random import choice
 from math import sqrt, log
@@ -18,9 +18,42 @@ def traverse_nodes(node, board, state, identity):
     Returns:        A node from which the next stage of the search can proceed.
 
     """
-    pass
-    # Hint: return leaf_node
 
+    # so i never used board, state, or identity so idk if i fukked up lmao
+    # also it's unfinished
+
+    # while loop exits if a leaf node is chosen
+    while(true):
+
+        # this node will be the next node to traverse to
+        node_to_traverse = None
+
+        # use the equation to pick which branch to go on (FROM LECTURE)
+        # c is the exploration/exploitation factor, idk what to set it at rn
+        best_value = 0; 
+        c = 100
+
+        # first, explore the child nodes
+        for child_node in node.child_nodes:
+            value = child_node.wins/child_node.visits + c*sqrt(log(child_node.parent.visits)/child_node.visits)
+            if value > best_value:
+                best_value = value
+                node_to_traverse = child_node
+
+        # then, explore the untried actions
+        for action in node.untried_actions: 
+            #okay i have no idea what to do here
+            #the equation doesn't apply??
+            #also, if an untried action is picked, I guess I return the parent node
+            #because there is no created node for the untried action?
+
+        node = node_to_traverse
+
+        # if node has no children, it is a leaf, so return it
+        if not node.child_nodes
+            return node
+
+    return False # something messed up probably
 
 def expand_leaf(node, board, state):
     """ Adds a new leaf to the tree by creating a new child node for the given node.
@@ -33,8 +66,22 @@ def expand_leaf(node, board, state):
     Returns:    The added child node.
 
     """
-    pass
-    # Hint: return new_node
+    # arbitrarily pick action from the node
+    random_action = choice(node.untried_actions)
+
+    # find all possible actions after that action is made 
+    # NOTE - is board a reference or a copy? Should we undo the action? if so how?
+    new_state = board.next_state(state, random_action)
+    possible_actions = board.legal_actions(new_state)
+
+    # make tha fookin' node
+    child_node = MCTSNode(node, random_action, possible_actions)
+
+    # adjust parent node's untried action list and child node dict
+    node.child_nodes[random_action] = child_node
+    node.untried_actions.remove(randome_action)
+
+    return child_node
 
 
 def rollout(board, state):
