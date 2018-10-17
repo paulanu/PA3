@@ -22,8 +22,8 @@ def traverse_nodes(node, board, state, identity):
     # so i never used board, state, or identity so idk if i fukked up lmao
     # also it's unfinished
 
-    # while loop exits if a leaf node is chosen
-    while(true):
+    # while loop exits if a leaf node is found
+    while(if not node.untried_actions):
 
         # this node will be the next node to traverse to
         node_to_traverse = None
@@ -33,27 +33,17 @@ def traverse_nodes(node, board, state, identity):
         best_value = 0; 
         c = 100
 
-        # first, explore the child nodes
+        # select a child nodes to explore
         for child_node in node.child_nodes:
             value = child_node.wins/child_node.visits + c*sqrt(log(child_node.parent.visits)/child_node.visits)
             if value > best_value:
                 best_value = value
                 node_to_traverse = child_node
 
-        # then, explore the untried actions
-        for action in node.untried_actions: 
-            #okay i have no idea what to do here
-            #the equation doesn't apply??
-            #also, if an untried action is picked, I guess I return the parent node
-            #because there is no created node for the untried action?
-
         node = node_to_traverse
 
-        # if node has no children, it is a leaf, so return it
-        if not node.child_nodes
-            return node
-
-    return False # something messed up probably
+    # return child node
+    return node
 
 def expand_leaf(node, board, state):
     """ Adds a new leaf to the tree by creating a new child node for the given node.
@@ -70,7 +60,7 @@ def expand_leaf(node, board, state):
     random_action = choice(node.untried_actions)
 
     # find all possible actions after that action is made 
-    # NOTE - is board a reference or a copy? Should we undo the action? if so how?
+    # NOTE - board is now changed, bc move was tried and board is a reference 
     new_state = board.next_state(state, random_action)
     possible_actions = board.legal_actions(new_state)
 
@@ -92,7 +82,11 @@ def rollout(board, state):
         state:  The state of the game.
 
     """
-    pass
+    # play until someone wins
+    while !board.is_ended(state):
+        actions = board.legal_actions(state)
+        random_action = choice(actions)
+        board.next_state(state, action)
 
 
 def backpropagate(node, won):
@@ -103,8 +97,11 @@ def backpropagate(node, won):
         won:    An indicator of whether the bot won or lost the game.
 
     """
-    pass
-
+    #go through tree until root node's parent, which is None
+    while(node is not None):
+        node.wins++
+        node.visits++
+        node = node.parent  
 
 def think(board, state):
     """ Performs MCTS by sampling games and calling the appropriate functions to construct the game tree.
