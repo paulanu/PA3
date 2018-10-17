@@ -23,7 +23,7 @@ def traverse_nodes(node, board, state, identity):
     # also it's unfinished
 
     # while loop exits if a leaf node is found
-    while(if not node.untried_actions):
+    while(not node.untried_actions and node.child_nodes):
 
         # this node will be the next node to traverse to
         node_to_traverse = None
@@ -61,7 +61,7 @@ def expand_leaf(node, board, state):
 
     # find all possible actions after that action is made
     # NOTE - board is now changed, bc move was tried and board is a reference
-    new_state = board.next_state(state, random_action)
+    board.next_state(state, random_action)
     possible_actions = board.legal_actions(new_state)
 
     # make tha fookin' node
@@ -69,7 +69,7 @@ def expand_leaf(node, board, state):
 
     # adjust parent node's untried action list and child node dict
     node.child_nodes[random_action] = child_node
-    node.untried_actions.remove(randome_action)
+    node.untried_actions.remove(random_action)
 
     return child_node
 
@@ -83,10 +83,10 @@ def rollout(board, state):
 
     """
     # play until someone wins
-    while !board.is_ended(state):
+    while not board.is_ended(state):
         actions = board.legal_actions(state)
         random_action = choice(actions)
-        board.next_state(state, action)
+        board.next_state(state, random_action)
 
 
 def backpropagate(node, won):
@@ -99,8 +99,8 @@ def backpropagate(node, won):
     """
     #go through tree until root node's parent, which is None
     while(node is not None):
-        node.wins++
-        node.visits++
+        node.wins += node.wins
+        node.visits += node.visits
         node = node.parent
 
 def think(board, state):
@@ -123,8 +123,29 @@ def think(board, state):
         # Start at root
         node = root_node
 
-        # Do MCTS - This is all you!
+        # Do MCTS lmaoooo
+        child_node = traverse_nodes(node, board, sampled_game, identity_of_bot)
+        expanded_node = expand_leaf(child_node, board, sampled_game)
+        rollout(board, sampled_game)
+
+        # check who won
+        if (board.points_values(sampled_game)[identity_of_bot] is 1) 
+            backpropogate(expanded_node, True)
+        else
+            backpropogate(expanded_node, False)
+
+    # select an action after MCTS has built the tree
+    win_rate = 0
+    action = None
+    for child_node in node.child_nodes
+        child_node_wr = child_node.wins/child_node.visits
+        if child_node_wr > win_rate
+            win_rate = child_node_wr
+            action = child_node
+    return action
+
+
+    #ASK HOW TREE WORKS- ARE ALL THINGS FROM ROOT EXPLORED BEFORE THE REST??????????????
 
     # Return an action, typically the most frequently used action (from the root) or the action with the best
-    # estimated win rate.
-    return None
+    # estimated win rate.    
