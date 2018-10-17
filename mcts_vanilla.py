@@ -18,6 +18,8 @@ def traverse_nodes(node, board, state, identity):
     Returns:        A node from which the next stage of the search can proceed.
 
     """
+    
+
     pass
     # Hint: return leaf_node
 
@@ -45,6 +47,8 @@ def rollout(board, state):
         state:  The state of the game.
 
     """
+
+    choice(board.legal_actions(state))
     pass
 
 
