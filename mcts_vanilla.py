@@ -1,4 +1,3 @@
-
 from mcts_node import MCTSNode
 from random import choice
 from math import sqrt, log
@@ -6,6 +5,8 @@ from math import sqrt, log
 num_nodes = 1000
 explore_faction = 2.
 
+
+# traverse nodes how does it work???
 def traverse_nodes(node, board, state, identity):
     """ Traverses the tree until the end criterion are met.
     Args:
@@ -17,13 +18,32 @@ def traverse_nodes(node, board, state, identity):
     Returns:        A node from which the next stage of the search can proceed.
     """
 
-    print(node)
-    print(board)
-    print(state)
-    print(identity)
+    # so i never used board, state, or identity so idk if i fukked up lmao
+    # also it's unfinished
 
-    pass
-    # Hint: return leaf_node
+    # while loop exits if a leaf node is found
+    while not node.untried_actions and node.child_nodes:
+
+
+        # this node will be the next node to traverse to
+        node_to_traverse = None
+
+        # use the equation to pick which branch to go on (FROM LECTURE)
+        # c is the exploration/exploitation factor, idk what to set it at rn
+        best_value = 0;
+        c = 100
+
+        # select a child nodes to explore
+        for child_node in node.child_nodes:
+            value = child_node.wins / child_node.visits + c * sqrt(log(child_node.parent.visits) / child_node.visits)
+            if value > best_value:
+                best_value = value
+                node_to_traverse = child_node
+
+        node = node_to_traverse
+
+    # return child node
+    return node
 
 
 def expand_leaf(node, board, state):
@@ -35,11 +55,24 @@ def expand_leaf(node, board, state):
 
     Returns:    The added child node.
     """
+    # arbitrarily pick action from the node
+    random_action = choice(node.untried_actions)
+
+    # find all possible actions after that action is made
+    # NOTE - board is now changed, bc move was tried and board is a reference
+
+    board.next_state(state, random_action)
+    possible_actions = board.legal_actions(new_state)
 
 
-    return new_node
-    pass
-    # Hint: return new_node
+    # make tha fookin' node
+    child_node = MCTSNode(node, random_action, possible_actions)
+
+    # adjust parent node's untried action list and child node dict
+    node.child_nodes[random_action] = child_node
+    node.untried_actions.remove(random_action)
+
+    return child_node
 
 
 def rollout(board, state):
@@ -48,8 +81,11 @@ def rollout(board, state):
         board:  The game setup.
         state:  The state of the game.
     """
-    return choice(board.legal_actions(state))
-    pass
+    # play until someone wins
+    while not board.is_ended(state):
+        actions = board.legal_actions(state)
+        random_action = choice(actions)
+        board.next_state(state, random_action)
 
 
 def backpropagate(node, won):
@@ -59,8 +95,16 @@ def backpropagate(node, won):
         won:    An indicator of whether the bot won or lost the game.
     """
 
-    pass
-
+    # go through tree until root node's parent, which is None
+    if won:
+        while node is not None:
+            node.wins = node.wins + 1
+            node.visits = node.visits + 1
+            node = node.parent
+    else:
+        while node is not None:
+            node.visits = node.visits + 1
+            node = node.parent
 
 def think(board, state):
     """ Performs MCTS by sampling games and calling the appropriate functions to construct the game tree.
@@ -81,8 +125,29 @@ def think(board, state):
         # Start at root
         node = root_node
 
-        # Do MCTS - This is all you!
+        # Do MCTS lmaoooo
+        child_node = traverse_nodes(node, board, sampled_game, identity_of_bot)
+        expanded_node = expand_leaf(child_node, board, sampled_game)
+        rollout(board, sampled_game)
+
+        # check who won
+        if (board.points_values(sampled_game)[identity_of_bot] is 1) 
+            backpropagate(expanded_node, True)
+        else
+            backpropagate(expanded_node, False)
+
+    # select an action after MCTS has built the tree
+    win_rate = 0
+    action = None
+    for child_node in node.child_nodes
+        child_node_wr = child_node.wins/child_node.visits
+        if child_node_wr > win_rate
+            win_rate = child_node_wr
+            action = child_node
+    return action
+
+
+    #ASK HOW TREE WORKS- ARE ALL THINGS FROM ROOT EXPLORED BEFORE THE REST??????????????
 
     # Return an action, typically the most frequently used action (from the root) or the action with the best
     # estimated win rate.
-    return None
