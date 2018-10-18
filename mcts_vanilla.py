@@ -17,34 +17,26 @@ def traverse_nodes(node, board, state, identity):
 
     Returns:        A node from which the next stage of the search can proceed.
     """
+    #if the node is a leaf node
+    if (node.untried_actions):
+        return node, state
+    #if node is end of branch
+    elif not node.untried_actions and not node.child_nodes:
+        return node, state
 
-    # so i never used board, state, or identity so idk if i fukked up lmao
-    # also it's unfinished
+    node_to_traverse = None
+    best_value = -1
+    c = 100
 
-    # while loop exits if a leaf node is found
-    while not node.untried_actions and node.child_nodes:
+    # select a child node to explore
+    for action, child_node in node.child_nodes.items():
+        value = child_node.wins / child_node.visits + c * sqrt(log(child_node.parent.visits) / child_node.visits)
+        if value > best_value:
+            best_value = value
+            node_to_traverse = child_node
 
-
-        # this node will be the next node to traverse to
-        node_to_traverse = None
-
-        # use the equation to pick which branch to go on (FROM LECTURE)
-        # c is the exploration/exploitation factor, idk what to set it at rn
-        best_value = 0;
-        c = 100
-
-        # select a child nodes to explore
-        for child_node in node.child_nodes:
-            value = child_node.wins / child_node.visits + c * sqrt(log(child_node.parent.visits) / child_node.visits)
-            if value > best_value:
-                best_value = value
-                node_to_traverse = child_node
-
-        node = node_to_traverse
-
-    # return child node
-    return node
-
+    state = board.next_state(state, node_to_traverse.parent_action)
+    return traverse_nodes(node_to_traverse, board, state, identity)
 
 def expand_leaf(node, board, state):
     """ Adds a new leaf to the tree by creating a new child node for the given node.
@@ -55,15 +47,17 @@ def expand_leaf(node, board, state):
 
     Returns:    The added child node.
     """
+    #if the node is a deadend, don't expand!
+    if (not node.untried_actions):
+        return node, state
+
     # arbitrarily pick action from the node
     random_action = choice(node.untried_actions)
 
     # find all possible actions after that action is made
     # NOTE - board is now changed, bc move was tried and board is a reference
-
-    board.next_state(state, random_action)
-    possible_actions = board.legal_actions(new_state)
-
+    state = board.next_state(state, random_action)
+    possible_actions = board.legal_actions(state)
 
     # make tha fookin' node
     child_node = MCTSNode(node, random_action, possible_actions)
@@ -72,7 +66,7 @@ def expand_leaf(node, board, state):
     node.child_nodes[random_action] = child_node
     node.untried_actions.remove(random_action)
 
-    return child_node
+    return child_node, state
 
 
 def rollout(board, state):
@@ -85,10 +79,11 @@ def rollout(board, state):
     while not board.is_ended(state):
         actions = board.legal_actions(state)
         random_action = choice(actions)
-        board.next_state(state, random_action)
+        state = board.next_state(state, random_action)
+    return state
 
 
-def backpropagate(node, won):
+def backpropagate(node, condition):
     """ Navigates the tree from a leaf node to the root, updating the win and visit count of each node along the path.
     Args:
         node:   A leaf node.
@@ -96,11 +91,12 @@ def backpropagate(node, won):
     """
 
     # go through tree until root node's parent, which is None
-    if won:
+    if condition == 1:
         while node is not None:
             node.wins = node.wins + 1
             node.visits = node.visits + 1
             node = node.parent
+    #do same for conditions 0 & 2
     else:
         while node is not None:
             node.visits = node.visits + 1
@@ -126,28 +122,27 @@ def think(board, state):
         node = root_node
 
         # Do MCTS lmaoooo
-        child_node = traverse_nodes(node, board, sampled_game, identity_of_bot)
-        expanded_node = expand_leaf(child_node, board, sampled_game)
-        rollout(board, sampled_game)
+        child_node, sampled_game = traverse_nodes(node, board, sampled_game, identity_of_bot)
+        expanded_node, sampled_game = expand_leaf(child_node, board, sampled_game)
+        sampled_game = rollout(board, sampled_game)
 
         # check who won
-        if (board.points_values(sampled_game)[identity_of_bot] is 1) 
-            backpropagate(expanded_node, True)
-        else
-            backpropagate(expanded_node, False)
+        # if node couldn't be expanded, mark down that it was visited but no win/loss.
+        # I'M NOT SURE IF THE ABOVE IS RIGHT BUT SOMETHING NEEDS TO HAPPEN ! 
+        # 0: node is an end point 1: player has won 2: player has lost
+        if (not expanded_node.untried_actions):
+            backpropagate(expanded_node, 0)
+        if board.points_values(sampled_game)[identity_of_bot] is 1:
+            backpropagate(expanded_node, 1)
+        else:
+            backpropagate(expanded_node, 2)
 
     # select an action after MCTS has built the tree
     win_rate = 0
-    action = None
-    for child_node in node.child_nodes
+    best_action = None
+    for action, child_node in node.child_nodes.items():
         child_node_wr = child_node.wins/child_node.visits
-        if child_node_wr > win_rate
+        if child_node_wr > win_rate:
             win_rate = child_node_wr
-            action = child_node
+            best_action = action
     return action
-
-
-    #ASK HOW TREE WORKS- ARE ALL THINGS FROM ROOT EXPLORED BEFORE THE REST??????????????
-
-    # Return an action, typically the most frequently used action (from the root) or the action with the best
-    # estimated win rate.
