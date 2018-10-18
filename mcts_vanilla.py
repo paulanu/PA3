@@ -1,42 +1,59 @@
 from mcts_node import MCTSNode
 from random import choice
-from math import sqrt, log
+from math import sqrt, log, inf
 
 num_nodes = 1000
 explore_faction = 2.
 
-
-# traverse nodes how does it work???
 def traverse_nodes(node, board, state, identity):
     """ Traverses the tree until the end criterion are met.
     Args:
         node:       A tree node from which the search is traversing.
         board:      The game setup.
         state:      The state of the game.
-        identity:   The bot's identity, either 'red' or 'blue'.
+        identity:   T/F of whether the bot is the current player. Used for minmax. 
 
     Returns:        A node from which the next stage of the search can proceed.
     """
     #if the node is a leaf node
     if (node.untried_actions):
         return node, state
-    #if node is end of branch
+    #if node is end of branch (a finished game)
     elif not node.untried_actions and not node.child_nodes:
         return node, state
 
     node_to_traverse = None
-    best_value = -1
+    best_value = -inf if identity else inf
     c = 100
 
-    # select a child node to explore
+    # select a child node to explore, depending on whose turn it is
     for action, child_node in node.child_nodes.items():
-        value = child_node.wins / child_node.visits + c * sqrt(log(child_node.parent.visits) / child_node.visits)
-        if value > best_value:
+        value = UCB_formula(child_node, c, identity)
+        if value > best_value and identity:
+            best_value = value
+            node_to_traverse = child_node
+        elif value < best_value and not identity:
             best_value = value
             node_to_traverse = child_node
 
+    # NOTE: I changed identity to be a true/false value
+    # because that way it is easy to tell if you are maxing out the UCB value or minimizing it
     state = board.next_state(state, node_to_traverse.parent_action)
-    return traverse_nodes(node_to_traverse, board, state, identity)
+    return traverse_nodes(node_to_traverse, board, state, not identity)
+
+def UCB_formula(node, c, identity):
+    """ A helper function for tree traversal - the upper confidence bound
+    Args:
+        node:   node that is in the tree (not the root)
+        c:      value of exploration parameter
+        identity: T/F of whether value should be calculated for the current player. 
+    Returns:    the calculated UCB
+    """
+    if not node.parent:
+        return 
+    if not identity:
+        return (1-node.wins/node.visits) + c*sqrt(log(node.parent.visits)/node.visits) 
+    return node.wins/node.visits + c*sqrt(log(node.parent.visits)/node.visits)
 
 def expand_leaf(node, board, state):
     """ Adds a new leaf to the tree by creating a new child node for the given node.
@@ -122,7 +139,7 @@ def think(board, state):
         node = root_node
 
         # Do MCTS lmaoooo
-        child_node, sampled_game = traverse_nodes(node, board, sampled_game, identity_of_bot)
+        child_node, sampled_game = traverse_nodes(node, board, sampled_game, True)
         expanded_node, sampled_game = expand_leaf(child_node, board, sampled_game)
         sampled_game = rollout(board, sampled_game)
 
