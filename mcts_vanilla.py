@@ -162,4 +162,5 @@ def think(board, state):
         if child_node_wr > win_rate:
             win_rate = child_node_wr
             best_action = action
+    print("Vanilla bot picking %s with expected score %f" % (str(best_action), win_rate))
     return best_action
