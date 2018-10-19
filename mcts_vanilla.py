@@ -16,7 +16,7 @@ def traverse_nodes(node, board, state, identity):
     Returns:        A node from which the next stage of the search can proceed.
     """
     #if the node is a leaf node
-    if (node.untried_actions):
+    if node.untried_actions:
         return node, state
     #if node is end of branch (a finished game)
     elif not node.untried_actions and not node.child_nodes:
@@ -65,7 +65,7 @@ def expand_leaf(node, board, state):
     Returns:    The added child node.
     """
     #if the node is a deadend, don't expand!
-    if (not node.untried_actions):
+    if not node.untried_actions:
         return node, state
 
     # arbitrarily pick action from the node
@@ -158,9 +158,8 @@ def think(board, state):
     win_rate = 0
     best_action = None
     for action, child_node in node.child_nodes.items():
-
         child_node_wr = child_node.wins/child_node.visits
         if child_node_wr > win_rate:
             win_rate = child_node_wr
             best_action = action
-    return action
+    return best_action
