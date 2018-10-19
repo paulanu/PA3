@@ -131,17 +131,17 @@ def think(board, state):
         rollout(board, sampled_game)
 
         # check who won
-        if (board.points_values(sampled_game)[identity_of_bot] is 1) 
+        if board.points_values(sampled_game)[identity_of_bot] is 1:
             backpropagate(expanded_node, True)
-        else
+        else:
             backpropagate(expanded_node, False)
 
     # select an action after MCTS has built the tree
     win_rate = 0
     action = None
-    for child_node in node.child_nodes
+    for child_node in node.child_nodes:
         child_node_wr = child_node.wins/child_node.visits
-        if child_node_wr > win_rate
+        if child_node_wr > win_rate:
             win_rate = child_node_wr
             action = child_node
     return action
